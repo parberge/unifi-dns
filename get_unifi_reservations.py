@@ -6,6 +6,7 @@ import logging
 import requests
 
 log = logging.getLogger(__name__)
+# Log to stderr. This is important since the output of stdout is used to create hosts file output
 log.addHandler(logging.StreamHandler())
 
 baseurl = os.environ.get('UNIFI_BASEURL', 'https://unifi:8443')
@@ -64,7 +65,7 @@ def get_clients():
 if __name__ == '__main__':
     try:
         for c in get_clients():
-            log.info(f"{c['ip']}, {c['name']}")
+            print(f"{c['ip']} {c['name']}")
     except requests.exceptions.ConnectionError:
         log.critical(f'Could not connect to unifi controller at {baseurl}')
         log.debug(f"Exception information below", exc_info=True)
