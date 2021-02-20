@@ -26,6 +26,7 @@ Clients with DNS-incompatible names will be skipped.
 | `UNIFI_POLL_INTERVAL`   | Seconds between API calls to UniFi Controller   | `60`                 |
 | `UNIFI_SITE`            | UniFi "site" name                               | `default`            |
 | `FIXED_ONLY`            | Flag for only handling clients with reserved IP | `False`              |
+| `LOG_LEVEL `            | Set logging level (e.g DEBUG, INFO etc)         | `INFO`               |
 
 * `docker-compose up`
 * UniFi clients with DNS-compatible aliases will be written to `/etc/dnsmasq.d/unifi.hosts`.
