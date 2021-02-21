@@ -5,18 +5,12 @@ import sys
 import logging
 import requests
 
-log = logging.getLogger(__name__)
-# Log to stderr. This is important since the output of stdout is used to create hosts file output
-log.addHandler(logging.StreamHandler())
-
 baseurl = os.environ.get('UNIFI_BASEURL', 'https://unifi:8443')
 username = os.environ.get('UNIFI_USERNAME')
 password = os.environ.get('UNIFI_PASSWORD')
 site = os.environ.get('UNIFI_SITE', 'default')
 fixed_only = os.environ.get('FIXED_ONLY', False)
 log_level = os.environ.get("LOG_LEVEL", "INFO")
-
-log.setLevel(logging.getLevelName(log_level))
 
 
 def get_configured_clients(session):
@@ -57,21 +51,24 @@ def get_clients():
         if re.search('^[a-zA-Z0-9-]+$', client['name']):
             friendly_clients.append(client)
         else:
-            log.debug(f"{client['name']} skipped due to invalid characters.")
+            logging.debug(f"{client['name']} skipped due to invalid characters.")
 
     return sorted(friendly_clients, key=lambda i: i['name'])
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=log_level)
     try:
         for c in get_clients():
             print(f"{c['ip']} {c['name']}")
     except requests.exceptions.ConnectionError:
-        log.critical(f'Could not connect to unifi controller at {baseurl}')
-        log.debug(f"Exception information below", exc_info=True)
+        logging.critical(f'Could not connect to unifi controller at {baseurl}')
+        logging.debug(f"Exception information below", exc_info=True)
         exit(1)
     except requests.exceptions.HTTPError:
         if baseurl.startswith("http://"):
-            log.error(f"Got HTTP error connecting to {baseurl}. You should probably connect using HTTPS instead of HTTP")
-        log.debug(f"Exception information below", exc_info=True)
+            logging.error(f"Got HTTP error connecting to {baseurl}. You should probably connect using HTTPS instead of HTTP")
+            logging.debug(f"Exception information below", exc_info=True)
+        else:
+            raise
         exit(1)
