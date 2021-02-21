@@ -11,6 +11,7 @@ password = os.environ.get('UNIFI_PASSWORD')
 site = os.environ.get('UNIFI_SITE', 'default')
 fixed_only = os.environ.get('FIXED_ONLY', False)
 log_level = os.environ.get("LOG_LEVEL", "INFO")
+replace_whitespaces = os.environ.get('REPLACE_WHITESPACES', False)
 
 
 def get_configured_clients(session):
@@ -48,6 +49,9 @@ def get_clients():
     
     friendly_clients = list()
     for client in clients.values():
+        if replace_whitespaces:
+            client['name'] = client['name'].replace(" ", "-")
+
         if re.search('^[a-zA-Z0-9-]+$', client['name']):
             friendly_clients.append(client)
         else:
