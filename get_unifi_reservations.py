@@ -2,7 +2,7 @@
 import os
 import re
 import sys
-
+import logging
 import requests
 
 baseurl = os.environ.get('UNIFI_BASEURL', 'https://unifi:8443')
@@ -10,6 +10,7 @@ username = os.environ.get('UNIFI_USERNAME')
 password = os.environ.get('UNIFI_PASSWORD')
 site = os.environ.get('UNIFI_SITE', 'default')
 fixed_only = os.environ.get('FIXED_ONLY', False)
+log_level = os.environ.get("LOG_LEVEL", "INFO")
 
 
 def get_configured_clients(session):
@@ -37,6 +38,7 @@ def get_clients():
     for c in get_configured_clients(s):
         if 'name' in c and 'fixed_ip' in c:
             clients[c['mac']] = {'name': c['name'], 'ip': c['fixed_ip']}
+
     if fixed_only is False:
         # Add active clients with alias
         # Active client IP overrides the reserved one (the actual IP is what matters most)
@@ -44,17 +46,29 @@ def get_clients():
             if 'name' in c and 'ip' in c:
                 clients[c['mac']] = {'name': c['name'], 'ip': c['ip']}
     
-    # Return a list of clients filtered on dns-friendly names and sorted by IP
-    friendly_clients = [c for c in clients.values() if re.search('^[a-zA-Z0-9-]+$', c['name'])] 
+    friendly_clients = list()
+    for client in clients.values():
+        if re.search('^[a-zA-Z0-9-]+$', client['name']):
+            friendly_clients.append(client)
+        else:
+            logging.debug(f"{client['name']} skipped due to invalid characters.")
+
     return sorted(friendly_clients, key=lambda i: i['name'])
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=log_level)
     try:
         for c in get_clients():
-            print(c['ip'], c['name'])
+            print(f"{c['ip']} {c['name']}")
     except requests.exceptions.ConnectionError:
-        print(f'Could not connect to unifi controller at {baseurl}', file=sys.stderr)
+        logging.critical(f'Could not connect to unifi controller at {baseurl}')
+        logging.debug(f"Exception information below", exc_info=True)
         exit(1)
-
-
+    except requests.exceptions.HTTPError:
+        if baseurl.startswith("http://"):
+            logging.error(f"Got HTTP error connecting to {baseurl}. You should probably connect using HTTPS instead of HTTP")
+            logging.debug(f"Exception information below", exc_info=True)
+        else:
+            raise
+        exit(1)

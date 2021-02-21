@@ -24,3 +24,4 @@ services:
       # DNSMASQ_OPTS: ''
       # Tip: use this to get rid of https-warnings in the logs
       #PYTHONWARNINGS: 'ignore:Unverified HTTPS request'
+      #LOG_LEVEL: INFO
